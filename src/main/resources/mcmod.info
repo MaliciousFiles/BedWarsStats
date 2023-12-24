@@ -1,0 +1,16 @@
+[
+{
+  "modid": "bedwarsstats",
+  "name": "BedWars Stats",
+  "description": "Display Hypixel BedWars stats in tab list and next to player names.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["MaliciousFiles"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.7",
+  "package": "io.github.maliciousfiles.bedwarsstats.mixins",
+  "refmap": "mixins.bedwarsstats.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "MixinGuiPlayerTabOverlay",
+    "MixinRender"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
