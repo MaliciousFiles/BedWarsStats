@@ -32,9 +32,6 @@ import java.util.*;
 // TODO: list ppl on teams
 @Mod(modid = "bedwarsstats", version = "1.0", name="BedWars Stats")
 public class BedWarsStats {
-    public static final String MODID = "bedwarsstats";
-    public static final String VERSION = "1.0";
-
     private static final String URL = "https://api.hypixel.net/v2/player?uuid=%s&key=8c3cc40f-be8d-4df1-ac59-ea96958635b4";
     private static final long CACHE_TIME = 1000 * 60 * 10;
     private static final Gson GSON = new Gson();
@@ -66,24 +63,22 @@ public class BedWarsStats {
             JsonElement stats = response.get("player");
             if (stats.isJsonNull()) {
                 EntityPlayer entity = Minecraft.getMinecraft().theWorld.getPlayerEntityByUUID(player);
-                if (entity == null) return null;
+                if (entity == null) return Maps.immutableEntry(null, CACHE_TIME);
 
                 Optional<Property> texture = entity
-                        .getGameProfile().getProperties().get("texture")
+                        .getGameProfile().getProperties().get("textures")
                         .stream().findFirst();
-                if (!texture.isPresent()) return Maps.immutableEntry(PlayerStatHolder.error(PlayerStatHolder.Error.NICK), CACHE_TIME);
+                if (!texture.isPresent()) {
+                    System.out.println("UNABLE TO FIND NICK ("+player+"): "+entity.getGameProfile().getProperties().keys());
+                    return Maps.immutableEntry(PlayerStatHolder.error(PlayerStatHolder.Error.NICK), CACHE_TIME);
+                }
 
                 String newId = GSON.fromJson(new String(Base64.getDecoder().decode(
                         texture.get().getValue())), JsonObject.class)
                         .get("profileId").getAsString();
-                UUID newUUID = new UUID(Integer.parseInt(newId.substring(0, 16), 16), Integer.parseInt(newId.substring(16), 16));
+                UUID newUUID = UUID.fromString(newId.replaceFirst("(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"));
 
-                System.out.println("NICK: "+player+" -> "+newUUID);
                 return queryPlayerData(newUUID);
-            }
-            // TODO: remove println statements at some point
-            if (!stats.getAsJsonObject().get("displayname").getAsString().equals(Minecraft.getMinecraft().theWorld.getPlayerEntityByUUID(player).getName())) {
-                System.out.println("NICK!! "+Minecraft.getMinecraft().theWorld.getPlayerEntityByUUID(player).getName()+" -> "+stats.getAsJsonObject().get("displayname").getAsString());
             }
 
             HashMap<PlayerStat, Float> playerStats = new HashMap<>();

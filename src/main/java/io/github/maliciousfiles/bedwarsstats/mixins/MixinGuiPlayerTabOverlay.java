@@ -20,10 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.UUID;
 
 @Mixin(GuiPlayerTabOverlay.class)
 public abstract class MixinGuiPlayerTabOverlay {
@@ -33,6 +31,10 @@ public abstract class MixinGuiPlayerTabOverlay {
     private int bedWarsStats$nameX = -1, bedWarsStats$nameY = -1, bedWarsStats$columnWidth = -1;
 
     @Unique
+    private int[] bedWarsStats$maxXs = new int[PlayerStat.values().length];
+    @Unique
+    private int[] bedWarsStats$curMaxXs = new int[PlayerStat.values().length];
+    @Unique
     private int bedWarsStats$maxWidth = 0;
     @Unique
     private int bedWarsStats$curMaxWidth = 0;
@@ -40,10 +42,12 @@ public abstract class MixinGuiPlayerTabOverlay {
     @Inject(method="renderPlayerlist", at=@At("HEAD"))
     public void resetMaxWidth(CallbackInfo ci) {
         bedWarsStats$curMaxWidth = 0;
+        Arrays.fill(bedWarsStats$curMaxXs, 0);
     }
     @Inject(method="renderPlayerlist", at=@At("RETURN"))
     public void moveMaxWidth(CallbackInfo ci) {
         bedWarsStats$maxWidth = bedWarsStats$curMaxWidth;
+        bedWarsStats$maxXs = Arrays.copyOf(bedWarsStats$curMaxXs, bedWarsStats$curMaxXs.length);
     }
 
     @ModifyVariable(method = "renderPlayerlist", index=24, at = @At(value="INVOKE", shift= At.Shift.BEFORE, target="Lnet/minecraft/client/gui/GuiPlayerTabOverlay;drawPing(IIILnet/minecraft/client/network/NetworkPlayerInfo;)V"))
@@ -57,14 +61,12 @@ public abstract class MixinGuiPlayerTabOverlay {
         return bedWarsStats$nameY = k2;
     }
 
-    // TODO: header width
-
-    @ModifyVariable(method = "renderPlayerlist", index = 13, at = @At(value = "INVOKE", shift= At.Shift.BY, by=-10, target="Lnet/minecraft/client/gui/GuiPlayerTabOverlay;drawRect(IIIII)V", ordinal=0))
+    @ModifyVariable(method = "renderPlayerlist", index = 13, at=@At(value = "INVOKE", target="Lnet/minecraft/client/gui/FontRenderer;listFormattedStringToWidth(Ljava/lang/String;I)Ljava/util/List;", ordinal=0))
     public int getColumnWidth(int i1) {
         return bedWarsStats$columnWidth = i1;
     }
 
-    @ModifyVariable(method="renderPlayerlist", index=16, at=@At(value = "INVOKE", shift= At.Shift.BY, by=-9, target="Lnet/minecraft/client/gui/GuiPlayerTabOverlay;drawRect(IIIII)V", ordinal=0))
+    @ModifyVariable(method="renderPlayerlist", index=16, at=@At(value = "INVOKE", target="Lnet/minecraft/client/gui/FontRenderer;listFormattedStringToWidth(Ljava/lang/String;I)Ljava/util/List;", ordinal=1))
     public int increaseWidth(int l1) {
         if (BedWarsStats.notInBWs()) return l1;
 
@@ -100,12 +102,14 @@ public abstract class MixinGuiPlayerTabOverlay {
             float value = stats.stats.get(stat);
             Color color = stat.getColor(value);
 
-            renderer.drawString(label, startX+width, bedWarsStats$nameY, Color.WHITE.getRGB());
-            width += renderer.getStringWidth(label) + 2;
+            bedWarsStats$curMaxXs[stat.ordinal()] = Math.max(bedWarsStats$curMaxXs[stat.ordinal()], width);
+            width = Math.max(width, bedWarsStats$maxXs[stat.ordinal()]);
 
-            String valueStr = new DecimalFormat("0.##").format(value);
-            renderer.drawString(valueStr, startX+width, bedWarsStats$nameY, color.getRGB());
-            width += renderer.getStringWidth(valueStr) + 5;
+            width = 2 + renderer.drawString(label,
+                    startX+width, bedWarsStats$nameY, Color.LIGHT_GRAY.getRGB()) - startX;
+
+            width = 5 + renderer.drawString(new DecimalFormat("0.##").format(value),
+                    startX+width, bedWarsStats$nameY, color.getRGB()) - startX;
         }
 
         bedWarsStats$curMaxWidth = Math.max(bedWarsStats$curMaxWidth, width - 5);
