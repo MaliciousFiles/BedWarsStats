@@ -5,7 +5,8 @@ import java.util.HashMap;
 public class PlayerStatHolder {
     public enum Error {
         RATE_LIMIT("Rate limit exceeded: will try again"),
-        NICK("Unable to reveal nick");
+        NICK("Unable to reveal nick"),
+        IO("Internal error, report if this issue persists");
 
         private final String message;
 
