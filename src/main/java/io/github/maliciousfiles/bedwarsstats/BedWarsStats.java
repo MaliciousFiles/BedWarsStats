@@ -32,7 +32,7 @@ import java.util.*;
 // TODO: list ppl on teams
 @Mod(modid = "bedwarsstats", version = "1.0", name="BedWars Stats")
 public class BedWarsStats {
-    private static final String URL = "https://api.hypixel.net/v2/player?uuid=%s&key=8c3cc40f-be8d-4df1-ac59-ea96958635b4";
+    private static final String URL = "https://api.hypixel.net/v2/player?uuid=%s&key=1ecb2c0c-0d57-4d24-8fe0-02b8fdaed028";
     private static final long CACHE_TIME = 1000 * 60 * 10;
     private static final Gson GSON = new Gson();
 
